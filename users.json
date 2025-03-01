@@ -1,0 +1,14 @@
+{
+  "alice": {
+    "password": "password123",
+    "balance": 50
+  },
+  "bob": {
+    "password": "securepass",
+    "balance": 30
+  },
+  "miner": {
+    "password": "minecoins",
+    "balance": 0
+  }
+}

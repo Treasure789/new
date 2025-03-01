@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain App</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        .hidden { display: none; }
+        input, button { margin: 5px; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- Login Form -->
+    <div id="login-section">
+        <h2>Login</h2>
+        <form id="login-form">
+            <input type="text" id="login-username" placeholder="Username" required><br>
+            <input type="password" id="login-password" placeholder="Password" required><br>
+            <button type="submit">Login</button>
+        </form>
+        <p>Don't have an account? <a href="#" onclick="showSignup()">Sign up</a></p>
+    </div>
+
+    <!-- Signup Form -->
+    <div id="signup-section" class="hidden">
+        <h2>Signup</h2>
+        <form id="signup-form">
+            <input type="text" id="signup-username" placeholder="Username" required><br>
+            <input type="password" id="signup-password" placeholder="Password" required><br>
+            <button type="submit">Sign Up</button>
+        </form>
+        <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard-section" class="hidden">
+        <h1>Welcome, <span id="user-name"></span></h1>
+        <p>Balance: <span id="user-balance"></span> Coins</p>
+
+        <form id="mine-form">
+            <button type="submit">Mine Block (Earn 10 Coins)</button>
+        </form>
+
+        <h2>Transfer Funds</h2>
+        <form id="transfer-form">
+            <input type="text" id="recipient" placeholder="Recipient Username" required><br>
+            <input type="number" id="amount" placeholder="Amount" step="0.01" required><br>
+            <button type="submit">Send</button>
+        </form>
+
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            checkSession();
+
+            document.getElementById("login-form").addEventListener("submit", function (e) {
+                e.preventDefault();
+                login();
+            });
+
+            document.getElementById("signup-form").addEventListener("submit", function (e) {
+                e.preventDefault();
+                signup();
+            });
+
+            document.getElementById("mine-form").addEventListener("submit", function (e) {
+                e.preventDefault();
+                mine();
+            });
+
+            document.getElementById("transfer-form").addEventListener("submit", function (e) {
+                e.preventDefault();
+                transfer();
+            });
+        });
+
+        function showSignup() {
+            document.getElementById("login-section").classList.add("hidden");
+            document.getElementById("signup-section").classList.remove("hidden");
+        }
+
+        function showLogin() {
+            document.getElementById("signup-section").classList.add("hidden");
+            document.getElementById("login-section").classList.remove("hidden");
+        }
+
+        function checkSession() {
+            fetch("/session")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.logged_in) {
+                        showDashboard(data.username, data.balance);
+                    }
+                });
+        }
+
+        function login() {
+            fetch("/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: document.getElementById("login-username").value,
+                    password: document.getElementById("login-password").value
+                })
+            }).then(response => response.json()).then(data => {
+                if (data.success) {
+                    showDashboard(data.username, data.balance);
+                } else {
+                    alert("Invalid credentials!");
+                }
+            });
+        }
+
+        function signup() {
+            fetch("/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    username: document.getElementById("signup-username").value,
+                    password: document.getElementById("signup-password").value
+                })
+            }).then(response => response.json()).then(data => {
+                if (data.success) {
+                    alert("Signup successful! Please login.");
+                    showLogin();
+                } else {
+                    alert("User already exists!");
+                }
+            });
+        }
+
+        function mine() {
+            fetch("/mine", { method: "POST" })
+                .then(response => response.json())
+                .then(data => {
+                    alert("Block mined! You earned 10 coins.");
+                    updateBalance(data.new_balance);
+                });
+        }
+
+        function transfer() {
+            fetch("/transfer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    recipient: document.getElementById("recipient").value,
+                    amount: document.getElementById("amount").value
+                })
+            }).then(response => response.json()).then(data => {
+                if (data.success) {
+                    alert("Transaction successful!");
+                    updateBalance(data.new_balance);
+                } else {
+                    alert(data.error);
+                }
+            });
+        }
+
+        function logout() {
+            fetch("/logout", { method: "POST" }).then(() => {
+                location.reload();
+            });
+        }
+
+        function showDashboard(username, balance) {
+            document.getElementById("login-section").classList.add("hidden");
+            document.getElementById("signup-section").classList.add("hidden");
+            document.getElementById("dashboard-section").classList.remove("hidden");
+            document.getElementById("user-name").innerText = username;
+            document.getElementById("user-balance").innerText = balance;
+        }
+
+        function updateBalance(balance) {
+            document.getElementById("user-balance").innerText = balance;
+        }
+    </script>
+
+</body>
+</html>
